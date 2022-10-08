@@ -1,22 +1,23 @@
 const http = require('http');
 
-const { Readable } = require('stream');
+const { Readable, Writable } = require('stream');
 
-const server = http.createServer((req, res) => {
-  if (req.url !== '/') {
-    return res.end();
-  }
-
-  const readableStream = new Readable({
-    read() {}, //compulsorily pass this option.. no need to code anything here
-  });
-
-  readableStream.on('data', (chunk) => {
-    console.log('data coming', chunk);
-  });
-
-  //pushing data manually and not from a file
-  readableStream.push('hello from streams');
+const readableStream = new Readable({
+  read() {}, //compulsorily pass this option.. no need to code anything here
+  highWaterMark: 20000, //threshhold (in bytes) for buffer ki isse zyada data buffer main push na ho.. default: 64kb
 });
 
-server.listen(5700, () => console.log('listening'));
+const writableStream = new Writable({
+  write(a) {
+    //jo b data ayega yaha mil jaega
+    console.log('writing data...', a.toString());
+  }, //similar to read property in readable
+});
+
+readableStream.on('data', (chunk) => {
+  console.log('reading data...', chunk.toString());
+  writableStream.write(chunk);
+});
+
+//pushing data manually and not from a file
+readableStream.push('hello from streams');
